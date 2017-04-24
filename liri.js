@@ -5,6 +5,7 @@ var fs = require("fs");
 var keys = require('./keys.js');
 
 var operation = process.argv[2];
+// nice use of `.slice` here
 var parameters = process.argv.slice(3);
 chooseOperation(operation, parameters);
 
@@ -32,14 +33,11 @@ function chooseOperation(operation, parameters)
 function getTweets(parameters)
 {
   var params = {screen_name: "realDonaldTrump"};
-  
-  var client = new twitter(
-      {
-        consumer_key: keys.twitterKeys.consumer_key,
-        consumer_secret: keys.twitterKeys.consumer_secret,
-        access_token_key: keys.twitterKeys.access_token_key,
-        access_token_secret: keys.twitterKeys.access_token_secret
-      });
+
+  // since you've already named your twitter keys the same as what the Twitter client expects
+  // you can simply pass those in instead of redundantly naming them.
+  var client = new twitter(keys.twitterKeys)
+
     console.log(parameters);
     if (parameters.length > 0)
     {
@@ -89,10 +87,15 @@ function spotifySong(parameters)
             return;
         }
 
-        returned += "Artist: " + data.tracks.items[0].artists[0].name + "\r\n";
-        returned += "Song name: " + data.tracks.items[0].name + "\r\n";
-        returned += "Album: " + data.tracks.items[0].album.name + "\r\n";
-        returned += "Preview Link: " + data.tracks.items[0].preview_url + "\r\n";
+        // when you find yourself accessing such a deeply nested piece of data
+        // you can go ahead and assign it to a variable for the sake of readability
+        // also you save a few keystrokes 💁
+        var track = data.tracks.items[0]
+
+        returned += "Artist: " + track.artists[0].name + "\r\n";
+        returned += "Song name: " + track.name + "\r\n";
+        returned += "Album: " + track.album.name + "\r\n";
+        returned += "Preview Link: " + track.preview_url + "\r\n";
         returned += "========================================================================\r\n";
         console.log(returned);
         save(returned);
@@ -111,6 +114,10 @@ function movie(parameters)
 //    * Actors in the movie.
 //    * Rotten Tomatoes Rating.
 //    * Rotten Tomatoes URL.
+
+    // by declaring title within this function you can prevent it from polluting the global scope
+    var title
+
     if (parameters.length <= 0)
     {
         title = "Mr Robot";
@@ -128,21 +135,26 @@ function movie(parameters)
         if (!err)
         {
             //console.log(JSON.stringify(body, null, 2));
-            returned += "the movie's name is: " + JSON.parse(body).Title + "\r\n";
-            returned += "the movie's release date is: " + JSON.parse(body).Released + "\r\n";
-            returned += "the movie's rating is: " + JSON.parse(body).imdbRating + "\r\n";
-            returned += "the movie was produced in: " + JSON.parse(body).Country + "\r\n";
-            returned += "the language of the movie is: " + JSON.parse(body).Language + "\r\n";
-            returned += "the movie was produced in: " + JSON.parse(body).Country + "\r\n";
-            returned += "the language of the movie is: " + JSON.parse(body).Language + "\r\n";
-            returned += "Plot: " + JSON.parse(body).Plot + "\r\n";
-            returned += "Actors: " + JSON.parse(body).Actors + "\r\n";
+
+            // Instead of repeatedly parsing the body, you can simply redefine the body as it's parsed result
+            // and then you can save yourself a few key strokes and a few computing cycles
+            body = JSON.parse(body)
+
+            returned += "the movie's name is: " + body.Title + "\r\n";
+            returned += "the movie's release date is: " + body.Released + "\r\n";
+            returned += "the movie's rating is: " + body.imdbRating + "\r\n";
+            returned += "the movie was produced in: " + body.Country + "\r\n";
+            returned += "the language of the movie is: " + body.Language + "\r\n";
+            returned += "the movie was produced in: " + body.Country + "\r\n";
+            returned += "the language of the movie is: " + body.Language + "\r\n";
+            returned += "Plot: " + body.Plot + "\r\n";
+            returned += "Actors: " + body.Actors + "\r\n";
 
 
-            
-            if (JSON.parse(body).Ratings != undefined)
+            // alays try to use strict equality checking
+            if (body.Ratings !== undefined)
             {
-                JSON.parse(body).Ratings.forEach(function(element) 
+                body.Ratings.forEach(function(element) 
                 {
                     if (element.Source === "Rotten Tomatoes")
                     returned += "Tomatoes Rating: " + element.Value + "\r\n";
@@ -152,7 +164,7 @@ function movie(parameters)
             {
                 returned += "No ratings found" + "\r\n";
             }
-            returned += "Website URL: " + JSON.parse(body).Website + "\r\n";
+            returned += "Website URL: " + body.Website + "\r\n";
             returned +="=================================================\r\n";
             console.log(returned);
             save(returned);

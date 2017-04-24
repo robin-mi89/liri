@@ -1,3 +1,6 @@
 node_modules
 .DS_Store
 keys.js
+
+# You don't generally want to commit your log files to git
+log.txt
